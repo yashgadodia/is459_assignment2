@@ -74,6 +74,24 @@ result = graph.connectedComponents()
 result.select("id", "component").orderBy("component").show() # assign each node a componenet id 
 result.groupBy("component").count().sort(desc("count")).show()
 
+# for stop words
+from pyspark.ml.feature import StopWordsRemover
+posts_rdd = posts_df.rdd
+content_rdd = posts_rdd.map(lambda x: x[2].lower().split(' '))
+words_rdd = content_rdd.map(lambda x: (x,1))
+word_rdd = words_rdd.reduceByKey(lambda x, y: x+y)
+word_rdd = word_rdd.sortBy(lambda pair:pair[1],ascending = False)
+#to get list of stopwords
+from pyspark.ml.feature import StopWordsRemover
+remover = StopWordsRemover()
+stopwords = remover.getStopWords()
+stopwords.append('\n')
+stopwords.append('')
+stopwords.append('\ni')
+#filter stopwords out and print top 10
+filtered_words_rdd = word_rdd.filter(lambda x: x[0] not in stopwords)
+filtered_words_rdd.take(10)
+
 # Question 2 
 
 results2 = graph.triangleCount()
